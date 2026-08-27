@@ -63,24 +63,35 @@ export function AtlasMap({ onSelectCountry }: AtlasMapProps) {
     // "load" can fire more than once for a single map instance (e.g. a style
     // reload) - use "once" so the source/layer setup below only ever runs once.
     map.once("load", () => {
+      // React StrictMode double-invokes this effect in dev (mount → cleanup
+      // → mount); "load" fires asynchronously, so a zombie first-mount map
+      // that was already removed by cleanup can still fire this callback
+      // later and add layers to itself instead of the live map - guard
+      // against operating on anything but the current map.
+      if (mapRef.current !== map) return;
+
       // Hide the demo basemap's own country choropleth/labels so they don't
       // compete visually with our own boundary fill/line layers.
       for (const layerId of ["countries-fill", "countries-boundary", "countries-label", "crimea-fill"]) {
         if (map.getLayer(layerId)) map.setLayoutProperty(layerId, "visibility", "none");
       }
 
+      // Prefixed to avoid colliding with the base style's own layers of the
+      // same un-prefixed names (it defines "countries-fill", "countries-line"
+      // -shaped ids too - see the hide-loop above) - addLayer throws on an id
+      // collision, which was silently swallowing everything after it here.
       map.addSource("countries", {
         type: "geojson",
         data: { type: "FeatureCollection", features: [] },
       });
       map.addLayer({
-        id: "countries-fill",
+        id: "atlas-countries-fill",
         type: "fill",
         source: "countries",
         paint: { "fill-color": BOUNDARY_FILL_COLOR, "fill-opacity": 0.55 },
       });
       map.addLayer({
-        id: "countries-line",
+        id: "atlas-countries-line",
         type: "line",
         source: "countries",
         paint: { "line-color": "#2b2b2b", "line-width": 1 },
@@ -90,7 +101,7 @@ export function AtlasMap({ onSelectCountry }: AtlasMapProps) {
       // it doesn't fit at the current zoom - small countries' names appear
       // once zoomed in enough rather than floating outside their territory.
       map.addLayer({
-        id: "countries-label",
+        id: "atlas-countries-label",
         type: "symbol",
         source: "countries",
         layout: {
@@ -105,17 +116,18 @@ export function AtlasMap({ onSelectCountry }: AtlasMapProps) {
         },
       });
 
-      map.on("click", "countries-fill", (e: MapLayerMouseEvent) => {
+      map.on("click", "atlas-countries-fill", (e: MapLayerMouseEvent) => {
         const props = e.features?.[0]?.properties;
         if (!props) return;
         new Popup().setLngLat(e.lngLat).setHTML(`<strong>${props.name}</strong>`).addTo(map);
         onSelectCountry?.(props.isoCode, props.name);
       });
-      map.on("mouseenter", "countries-fill", () => (map.getCanvas().style.cursor = "pointer"));
-      map.on("mouseleave", "countries-fill", () => (map.getCanvas().style.cursor = ""));
+      map.on("mouseenter", "atlas-countries-fill", () => (map.getCanvas().style.cursor = "pointer"));
+      map.on("mouseleave", "atlas-countries-fill", () => (map.getCanvas().style.cursor = ""));
 
       fetchCountries()
         .then((countries: CountryFeature[]) => {
+          if (mapRef.current !== map) return;
           const source = map.getSource("countries") as GeoJSONSource | undefined;
           source?.setData(withColoring(countriesToFeatureCollection(countries)));
         })
