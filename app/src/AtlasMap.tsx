@@ -7,7 +7,8 @@ import {
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useRef, useState } from "react";
-import { BOUNDARY_PALETTE, hashToColorIndex } from "./colors";
+import { colorCountries } from "./adjacency";
+import { BOUNDARY_PALETTE } from "./colors";
 import { countriesToFeatureCollection, fetchCountries } from "./data";
 import type { CountryFeature } from "./types";
 
@@ -20,14 +21,16 @@ const BOUNDARY_FILL_COLOR = [
   "#999999",
 ] as unknown as ExpressionSpecification;
 
-function withColorIndex(fc: GeoJSON.FeatureCollection): GeoJSON.FeatureCollection {
+/** Assigns each country a color such that no two touching countries share one (see adjacency.ts). */
+function withColoring(fc: GeoJSON.FeatureCollection): GeoJSON.FeatureCollection {
+  const colorOf = colorCountries(fc.features);
   return {
     ...fc,
     features: fc.features.map((f) => ({
       ...f,
       properties: {
         ...f.properties,
-        colorIndex: hashToColorIndex(String(f.properties?.isoCode ?? ""), BOUNDARY_PALETTE.length),
+        colorIndex: colorOf.get(String(f.properties?.isoCode ?? "")) ?? 0,
       },
     })),
   };
@@ -82,6 +85,25 @@ export function AtlasMap({ onSelectCountry }: AtlasMapProps) {
         source: "countries",
         paint: { "line-color": "#2b2b2b", "line-width": 1 },
       });
+      // Symbol layers on polygon sources auto-place the label at a sensible
+      // interior point (MapLibre computes this per feature) and hide it if
+      // it doesn't fit at the current zoom - small countries' names appear
+      // once zoomed in enough rather than floating outside their territory.
+      map.addLayer({
+        id: "countries-label",
+        type: "symbol",
+        source: "countries",
+        layout: {
+          "text-field": ["get", "name"],
+          "text-font": ["Noto Sans Regular"],
+          "text-size": 11,
+        },
+        paint: {
+          "text-color": "#ffffff",
+          "text-halo-color": "#000000",
+          "text-halo-width": 1.2,
+        },
+      });
 
       map.on("click", "countries-fill", (e: MapLayerMouseEvent) => {
         const props = e.features?.[0]?.properties;
@@ -95,7 +117,7 @@ export function AtlasMap({ onSelectCountry }: AtlasMapProps) {
       fetchCountries()
         .then((countries: CountryFeature[]) => {
           const source = map.getSource("countries") as GeoJSONSource | undefined;
-          source?.setData(withColorIndex(countriesToFeatureCollection(countries)));
+          source?.setData(withColoring(countriesToFeatureCollection(countries)));
         })
         .catch((err: unknown) => setError(err instanceof Error ? err.message : String(err)));
     });
