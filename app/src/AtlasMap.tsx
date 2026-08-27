@@ -57,7 +57,9 @@ export function AtlasMap({ onSelectCountry }: AtlasMapProps) {
     mapRef.current = map;
     if (import.meta.env.DEV) (window as unknown as { __map?: MapLibreMap }).__map = map;
 
-    map.on("load", () => {
+    // "load" can fire more than once for a single map instance (e.g. a style
+    // reload) - use "once" so the source/layer setup below only ever runs once.
+    map.once("load", () => {
       // Hide the demo basemap's own country choropleth/labels so they don't
       // compete visually with our own boundary fill/line layers.
       for (const layerId of ["countries-fill", "countries-boundary", "countries-label", "crimea-fill"]) {

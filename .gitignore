@@ -11,3 +11,6 @@ backend/**/obj/
 .vscode/
 .idea/
 .DS_Store
+
+# Local NLP model weights (multi-GB, downloaded by backend/models/download.sh)
+backend/models/*/

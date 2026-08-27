@@ -9,7 +9,7 @@ time, Atlastica fetches data on demand and caches it with a staleness TTL.
 
 ```
 Natural Earth (boundaries, seeded once, resynced ~180d)  ─┐
-REST Countries (structured facts: population, area, ...)  ├─► Postgres ─► ASP.NET Core API ─► React/MapLibre frontend
+Wikidata SPARQL (structured facts: population, area, ...)  ├─► Postgres ─► ASP.NET Core API ─► React/MapLibre frontend
 Wikipedia + local NLP model (free-text facts, POI, images)─┘
 ```
 
@@ -20,7 +20,7 @@ Wikipedia + local NLP model (free-text facts, POI, images)─┘
 - `backend/Atlastica.Api` — ASP.NET Core Web API, controllers + DI wiring.
 - `backend/Atlastica.Domain` — entities: `Country`, `CountryFacts`, `PointOfInterest`.
 - `backend/Atlastica.Infrastructure` — EF Core `DbContext` (Npgsql), migrations,
-  external fetchers (`NaturalEarthBoundaryFetcher`, `RestCountriesFetcher`,
+  external fetchers (`NaturalEarthBoundaryFetcher`, `WikidataCountryFetcher`,
   `WikipediaFetcher`), and the background boundary-refresh job.
 - `backend/Atlastica.Nlp` — wraps a small local model that turns raw Wikipedia extract
   text into structured fields (government description, mountains, rivers, biodiversity
@@ -50,7 +50,7 @@ Two different policies, both driven by a `fetched_at` timestamp column:
 - **Country facts & POI**: refreshed **on demand**, on the request path. The shared
   cache-or-refetch helper checks `fetched_at`: if within the configured TTL
   (40–60 days, configurable), serve straight from Postgres; otherwise re-fetch from
-  source (REST Countries / Wikipedia), re-run NLP extraction, update the row (and
+  source (Wikidata / Wikipedia), re-run NLP extraction, update the row (and
   `fetched_at`) before responding.
 
 ## POI seed list
@@ -63,7 +63,7 @@ fetch/cache pipeline as country facts, not hand-written.
 ## Licensing / attribution
 
 - Natural Earth: public domain, no attribution required.
-- REST Countries: public data, no restrictive license.
+- Wikidata: CC0, no attribution required.
 - Wikipedia / Wikimedia Commons: CC BY-SA — attribution must be shown in the UI
   wherever this content is displayed (country facts panel, POI popups).
 

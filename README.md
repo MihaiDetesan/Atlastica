@@ -29,6 +29,9 @@ docker run --name atlastica-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=atla
 ### Backend
 
 ```bash
+# one-time: downloads the local extraction model (~2.6GB, not committed to git)
+backend/models/download.sh
+
 cd backend/Atlastica.Api
 dotnet ef database update
 dotnet run
@@ -45,6 +48,6 @@ npm run dev
 ## Data & licensing
 
 - Country boundaries: [Natural Earth](https://www.naturalearthdata.com/) (public domain).
-- Structured country facts: [REST Countries](https://restcountries.com/).
+- Structured country facts: [Wikidata](https://www.wikidata.org/) (SPARQL query endpoint; REST Countries' free tier was retired in favor of a paid API-key-gated v5, so we use Wikidata instead - also free/keyless, and already precedented in Historica's pipeline).
 - Free-text facts, POI descriptions, and images: Wikipedia / Wikimedia Commons
   (CC BY-SA — attribution shown in the UI where this data is displayed).
