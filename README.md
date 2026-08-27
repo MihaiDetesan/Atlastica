@@ -21,8 +21,9 @@ See [CLAUDE.md](./CLAUDE.md) for architecture, data flow, and data source detail
 ### Database
 
 ```bash
-# example: local Postgres via Docker
-docker run --name atlastica-db -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:16
+# local Postgres via Docker (host port 5433, to avoid clashing with any
+# system Postgres already on 5432)
+docker run --name atlastica-db -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=atlastica -p 5433:5432 -d postgres:16
 ```
 
 ### Backend
