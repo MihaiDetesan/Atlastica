@@ -1,0 +1,13 @@
+# Frontend
+app/node_modules/
+app/dist/
+
+# Backend (.NET)
+backend/**/bin/
+backend/**/obj/
+*.user
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
