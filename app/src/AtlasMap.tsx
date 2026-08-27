@@ -1,5 +1,6 @@
 import {
   type ExpressionSpecification,
+  type GeoJSONSource,
   Map as MapLibreMap,
   type MapLayerMouseEvent,
   Popup,
@@ -91,10 +92,8 @@ export function AtlasMap({ onSelectCountry }: AtlasMapProps) {
 
       fetchCountries()
         .then((countries: CountryFeature[]) => {
-          const source = map.getSource("countries");
-          if (source && "setData" in source) {
-            source.setData(withColorIndex(countriesToFeatureCollection(countries)));
-          }
+          const source = map.getSource("countries") as GeoJSONSource | undefined;
+          source?.setData(withColorIndex(countriesToFeatureCollection(countries)));
         })
         .catch((err: unknown) => setError(err instanceof Error ? err.message : String(err)));
     });
