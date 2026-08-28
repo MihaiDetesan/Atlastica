@@ -35,9 +35,24 @@ public sealed class LocalPhi3ExtractionService : IFactExtractionService, IDispos
         const string prompt = """
             Extract facts about {0} from the article text below. Respond with
             strict JSON only (no markdown, no commentary), matching exactly:
-            {{"governmentForm": string|null, "mainMountains": string|null, "mainRivers": string|null, "biodiversityFacts": string|null}}
-            Each value should be a short (1-2 sentence) summary in your own words,
-            or null if the article does not mention it.
+            {{"governmentForm": string|null, "notableGeographicFeatures": string|null, "biodiversityFacts": string|null}}
+
+            governmentForm: a short (1 sentence) description, or null if not mentioned.
+
+            notableGeographicFeatures: the specific NAME of a mountain, river,
+            desert, or similar landmark, but only if it is genuinely famous
+            internationally (e.g. "the Amazon river", "the Himalayas", "the
+            Sahara desert"). Most countries do NOT have one - if nothing in the
+            article is internationally famous by name, use null.
+            Do NOT describe the country's borders, coastline, general location,
+            or overall terrain/extent (e.g. "borders the Rhine and the
+            Atlantic" is wrong) - only a specific named landmark counts.
+
+            biodiversityFacts: only if the article mentions something distinctive
+            about {0}'s wildlife or ecosystems; otherwise null.
+
+            Never write placeholder text like "not specified", "none", "n/a", or
+            "not well known" - use JSON null instead.
 
             Article text:
             {1}
@@ -110,7 +125,7 @@ public sealed class LocalPhi3ExtractionService : IFactExtractionService, IDispos
         if (json is null)
         {
             _logger.LogWarning("Model output did not contain valid JSON: {Output}", Truncate(modelOutput));
-            return new CountryFactExtractionResult(null, null, null, null);
+            return new CountryFactExtractionResult(null, null, null);
         }
 
         try
@@ -119,14 +134,13 @@ public sealed class LocalPhi3ExtractionService : IFactExtractionService, IDispos
             var root = doc.RootElement;
             return new CountryFactExtractionResult(
                 GetNullableString(root, "governmentForm"),
-                GetNullableString(root, "mainMountains"),
-                GetNullableString(root, "mainRivers"),
+                GetNullableString(root, "notableGeographicFeatures"),
                 GetNullableString(root, "biodiversityFacts"));
         }
         catch (JsonException ex)
         {
             _logger.LogWarning(ex, "Failed to parse model JSON output: {Json}", Truncate(json));
-            return new CountryFactExtractionResult(null, null, null, null);
+            return new CountryFactExtractionResult(null, null, null);
         }
     }
 
@@ -152,10 +166,21 @@ public sealed class LocalPhi3ExtractionService : IFactExtractionService, IDispos
         }
     }
 
+    // Small models don't always follow "use JSON null" instructions reliably -
+    // treat common no-info placeholder strings the same as an actual null.
+    private static readonly HashSet<string> PlaceholderValues = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "not specified", "not mentioned", "none", "n/a", "na", "unknown",
+        "not applicable", "not well known", "not well-known", "no notable features",
+        "no notable geographic features", "not available", "",
+    };
+
     private static string? GetNullableString(JsonElement root, string propertyName)
     {
         if (!root.TryGetProperty(propertyName, out var value)) return null;
-        return value.ValueKind == JsonValueKind.String ? value.GetString() : null;
+        if (value.ValueKind != JsonValueKind.String) return null;
+        var str = value.GetString()?.Trim();
+        return str is null || PlaceholderValues.Contains(str) ? null : str;
     }
 
     /// <summary>Small models often wrap JSON in markdown fences or add stray text - take the outermost {...}.</summary>

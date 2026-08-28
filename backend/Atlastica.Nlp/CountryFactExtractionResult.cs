@@ -2,8 +2,7 @@ namespace Atlastica.Nlp;
 
 public record CountryFactExtractionResult(
     string? GovernmentForm,
-    string? MainMountains,
-    string? MainRivers,
+    string? NotableGeographicFeatures,
     string? BiodiversityFacts);
 
 public record PoiDescriptionResult(string ShortDescription);

@@ -32,8 +32,7 @@ public class AtlasticaDbContext(DbContextOptions<AtlasticaDbContext> options) : 
             e.Property(f => f.OfficialLanguages).HasColumnName("official_languages");
             e.Property(f => f.AreaKm2).HasColumnName("area_km2");
             e.Property(f => f.Currency).HasColumnName("currency");
-            e.Property(f => f.MainMountains).HasColumnName("main_mountains");
-            e.Property(f => f.MainRivers).HasColumnName("main_rivers");
+            e.Property(f => f.NotableGeographicFeatures).HasColumnName("notable_geographic_features");
             e.Property(f => f.BiodiversityFacts).HasColumnName("biodiversity_facts");
             e.Property(f => f.SourceExtractHash).HasColumnName("source_extract_hash");
             e.Property(f => f.FetchedAt).HasColumnName("fetched_at");

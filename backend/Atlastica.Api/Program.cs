@@ -1,4 +1,6 @@
+using System.Threading.RateLimiting;
 using Atlastica.Infrastructure;
+using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,12 +13,44 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddAtlasticaInfrastructure(builder.Configuration);
 
+// Allowed origins come from config ("Cors:AllowedOrigins") so the deployed
+// site's real origin can be set via appsettings.Production.json or the
+// Cors__AllowedOrigins__0 env var, instead of the frontend dev URL being
+// hardcoded into every environment.
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+    ?? ["http://localhost:5173"];
+
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy => policy
-        .WithOrigins("http://localhost:5173")
+        .WithOrigins(allowedOrigins)
         .AllowAnyHeader()
         .AllowAnyMethod());
+});
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    // Baseline for all endpoints.
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 100,
+                Window = TimeSpan.FromMinutes(1),
+            }));
+
+    // Tighter limit for the facts endpoint.
+    options.AddPolicy("facts", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+            }));
 });
 
 var app = builder.Build();
@@ -31,6 +65,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseCors();
+
+app.UseRateLimiter();
 
 app.UseAuthorization();
 

@@ -78,13 +78,9 @@ namespace Atlastica.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("government_form");
 
-                    b.Property<string>("MainMountains")
+                    b.Property<string>("NotableGeographicFeatures")
                         .HasColumnType("text")
-                        .HasColumnName("main_mountains");
-
-                    b.Property<string>("MainRivers")
-                        .HasColumnType("text")
-                        .HasColumnName("main_rivers");
+                        .HasColumnName("notable_geographic_features");
 
                     b.Property<List<string>>("OfficialLanguages")
                         .IsRequired()

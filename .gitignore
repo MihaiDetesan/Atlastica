@@ -14,3 +14,7 @@ backend/**/obj/
 
 # Local NLP model weights (multi-GB, downloaded by backend/models/download.sh)
 backend/models/*/
+
+# Extracted facts data (regenerable via Atlastica.FactsExtractor; source of
+# truth ends up in Postgres via `import`, not this file)
+backend/data/

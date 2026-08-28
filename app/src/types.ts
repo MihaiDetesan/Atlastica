@@ -12,8 +12,7 @@ export interface CountryFacts {
   officialLanguages: string[];
   areaKm2: number | null;
   currency: string | null;
-  mainMountains: string | null;
-  mainRivers: string | null;
+  notableGeographicFeatures: string | null;
   biodiversityFacts: string | null;
   fetchedAt: string;
 }

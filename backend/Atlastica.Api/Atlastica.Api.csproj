@@ -4,6 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>7c9c9b41-9b0c-4e7a-9c4a-atlastica-api</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

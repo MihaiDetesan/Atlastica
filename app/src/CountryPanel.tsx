@@ -53,12 +53,7 @@ export function CountryPanel({ isoCode, name, onClose }: CountryPanelProps) {
 
       {error && <p style={{ color: "#e34948" }}>Failed to load facts: {error}</p>}
 
-      {!facts && !error && (
-        <p style={{ opacity: 0.8, fontSize: 13 }}>
-          Loading facts... the first lookup for a country can take a couple of minutes (local
-          model extraction); repeat visits are served from cache instantly.
-        </p>
-      )}
+      {!facts && !error && <p style={{ opacity: 0.8, fontSize: 13 }}>Loading facts...</p>}
 
       {facts && (
         <dl style={{ fontSize: 13, lineHeight: 1.6, margin: 0 }}>
@@ -71,9 +66,11 @@ export function CountryPanel({ isoCode, name, onClose }: CountryPanelProps) {
           />
           <Field label="Area" value={facts.areaKm2 !== null ? `${formatNumber(facts.areaKm2)} km²` : "unknown"} />
           <Field label="Currency" value={facts.currency ?? "unknown"} />
-          <Field label="Main mountains" value={facts.mainMountains ?? "not mentioned"} />
-          <Field label="Main rivers" value={facts.mainRivers ?? "not mentioned"} />
-          <Field label="Biodiversity" value={facts.biodiversityFacts ?? "not mentioned"} />
+          {/* These two are opportunistic (only well-known/distinctive facts get
+              extracted at all) - omit the row entirely rather than show a
+              placeholder when there's nothing notable to report. */}
+          {facts.notableGeographicFeatures && <Field label="Notable geography" value={facts.notableGeographicFeatures} />}
+          {facts.biodiversityFacts && <Field label="Biodiversity" value={facts.biodiversityFacts} />}
           <p style={{ opacity: 0.5, fontSize: 11, marginTop: 12 }}>
             Facts from Wikidata &amp; Wikipedia (CC BY-SA), last refreshed{" "}
             {new Date(facts.fetchedAt).toLocaleDateString()}.

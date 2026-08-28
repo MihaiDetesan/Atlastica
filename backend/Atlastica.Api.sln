@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atlastica.Infrastructure", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atlastica.Nlp", "Atlastica.Nlp\Atlastica.Nlp.csproj", "{43DDDCAE-276D-482D-B89B-319B8532956B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Atlastica.FactsExtractor", "Atlastica.FactsExtractor\Atlastica.FactsExtractor.csproj", "{ACA58ECD-A56E-4EC0-8E4C-94F12A34D0DF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,5 +38,9 @@ Global
 		{43DDDCAE-276D-482D-B89B-319B8532956B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{43DDDCAE-276D-482D-B89B-319B8532956B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{43DDDCAE-276D-482D-B89B-319B8532956B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ACA58ECD-A56E-4EC0-8E4C-94F12A34D0DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ACA58ECD-A56E-4EC0-8E4C-94F12A34D0DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ACA58ECD-A56E-4EC0-8E4C-94F12A34D0DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ACA58ECD-A56E-4EC0-8E4C-94F12A34D0DF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

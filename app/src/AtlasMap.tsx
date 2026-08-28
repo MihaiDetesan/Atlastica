@@ -116,11 +116,30 @@ export function AtlasMap({ onSelectCountry }: AtlasMapProps) {
         },
       });
 
+      // Added last (after fill/line/label) so the highlighted contour always
+      // renders above every other country - and above its own fill/line, on
+      // re-click - rather than being z-fought by paint order.
+      map.addSource("selected-country", {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [] },
+      });
+      map.addLayer({
+        id: "atlas-selected-line",
+        type: "line",
+        source: "selected-country",
+        paint: { "line-color": "#ffcc00", "line-width": 3 },
+      });
+
       map.on("click", "atlas-countries-fill", (e: MapLayerMouseEvent) => {
-        const props = e.features?.[0]?.properties;
-        if (!props) return;
-        new Popup().setLngLat(e.lngLat).setHTML(`<strong>${props.name}</strong>`).addTo(map);
+        const feature = e.features?.[0];
+        const props = feature?.properties;
+        if (!feature || !props) return;
+        const nameEl = document.createElement("strong");
+        nameEl.textContent = props.name;
+        new Popup().setLngLat(e.lngLat).setDOMContent(nameEl).addTo(map);
         onSelectCountry?.(props.isoCode, props.name);
+        const source = map.getSource("selected-country") as GeoJSONSource | undefined;
+        source?.setData({ type: "FeatureCollection", features: [feature] });
       });
       map.on("mouseenter", "atlas-countries-fill", () => (map.getCanvas().style.cursor = "pointer"));
       map.on("mouseleave", "atlas-countries-fill", () => (map.getCanvas().style.cursor = ""));

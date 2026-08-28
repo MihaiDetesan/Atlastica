@@ -1,13 +1,14 @@
 # Atlastica
 
-An interactive world map: click a country to see population, form of government,
-official languages, area, currency, and notable mountains/rivers/biodiversity facts.
-Click a point-of-interest marker (Lake Victoria, Mariana Trench, Grand Canyon, ...) to
-see a short description and picture.
+An interactive world map: click a country to see population, capital, form of
+government, official languages, area, currency, and any well-known geographic/
+biodiversity facts. Click a point-of-interest marker (Lake Victoria, Mariana Trench,
+Grand Canyon, ...) to see a short description and picture.
 
-Sibling project to [Historica](../Historica) (same map-rendering approach), but with a
-real backend + database instead of a static offline pipeline, since country/POI facts
-are fetched from live public sources and refreshed periodically.
+Sibling project to [Historica](../Historica) (same map-rendering approach), with a
+real backend + database - but like Historica, the expensive data-population step
+(Wikidata/Wikipedia fetching + local NLP extraction) runs offline, as a separate
+console tool, not on the API request path. The API only ever reads Postgres.
 
 ## Stack
 
@@ -35,6 +36,18 @@ backend/models/download.sh
 cd backend/Atlastica.Api
 dotnet ef database update
 dotnet run
+```
+
+### Populating country facts
+
+The API only ever reads Postgres - country facts are populated by a separate offline
+tool that fetches Wikidata/Wikipedia and runs local NLP extraction, then writes a
+reviewable JSON file before anything touches the database:
+
+```bash
+cd backend/Atlastica.FactsExtractor
+dotnet run -- extract   # ~100s/country, resumable - writes backend/data/country-facts.json
+dotnet run -- import    # upserts that file into country_facts
 ```
 
 ### Frontend
