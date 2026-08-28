@@ -62,6 +62,10 @@ namespace Atlastica.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("biodiversity_facts");
 
+                    b.Property<string>("Capital")
+                        .HasColumnType("text")
+                        .HasColumnName("capital");
+
                     b.Property<string>("Currency")
                         .HasColumnType("text")
                         .HasColumnName("currency");

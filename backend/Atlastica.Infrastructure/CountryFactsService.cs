@@ -53,6 +53,7 @@ public class CountryFactsService(
         }
 
         existing.Population = wikidataFacts?.Population;
+        existing.Capital = wikidataFacts?.Capital;
         existing.AreaKm2 = wikidataFacts?.AreaKm2;
         existing.Currency = wikidataFacts?.Currency;
         existing.OfficialLanguages = wikidataFacts?.OfficialLanguages ?? [];

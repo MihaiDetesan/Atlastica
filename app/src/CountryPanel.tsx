@@ -62,6 +62,7 @@ export function CountryPanel({ isoCode, name, onClose }: CountryPanelProps) {
 
       {facts && (
         <dl style={{ fontSize: 13, lineHeight: 1.6, margin: 0 }}>
+          <Field label="Capital" value={facts.capital ?? "unknown"} />
           <Field label="Population" value={formatNumber(facts.population)} />
           <Field label="Government" value={facts.governmentForm ?? "unknown"} />
           <Field

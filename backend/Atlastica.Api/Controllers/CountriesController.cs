@@ -10,6 +10,7 @@ public record CountryFeatureDto(string IsoCode, string Name, JsonElement Geometr
 public record CountryFactsDto(
     string IsoCode,
     long? Population,
+    string? Capital,
     string? GovernmentForm,
     List<string> OfficialLanguages,
     double? AreaKm2,
@@ -45,6 +46,7 @@ public class CountriesController(AtlasticaDbContext db, CountryFactsService fact
         return Ok(new CountryFactsDto(
             facts.IsoCode,
             facts.Population,
+            facts.Capital,
             facts.GovernmentForm,
             facts.OfficialLanguages,
             facts.AreaKm2,

@@ -7,6 +7,7 @@ export interface CountryFeature {
 export interface CountryFacts {
   isoCode: string;
   population: number | null;
+  capital: string | null;
   governmentForm: string | null;
   officialLanguages: string[];
   areaKm2: number | null;

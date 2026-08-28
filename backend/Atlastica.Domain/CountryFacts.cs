@@ -4,6 +4,7 @@ public class CountryFacts
 {
     public required string IsoCode { get; set; }
     public long? Population { get; set; }
+    public string? Capital { get; set; }
     public string? GovernmentForm { get; set; }
     public List<string> OfficialLanguages { get; set; } = [];
     public double? AreaKm2 { get; set; }

@@ -27,6 +27,7 @@ public class AtlasticaDbContext(DbContextOptions<AtlasticaDbContext> options) : 
             e.HasKey(f => f.IsoCode);
             e.Property(f => f.IsoCode).HasColumnName("iso_code");
             e.Property(f => f.Population).HasColumnName("population");
+            e.Property(f => f.Capital).HasColumnName("capital");
             e.Property(f => f.GovernmentForm).HasColumnName("government_form");
             e.Property(f => f.OfficialLanguages).HasColumnName("official_languages");
             e.Property(f => f.AreaKm2).HasColumnName("area_km2");
