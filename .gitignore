@@ -12,6 +12,9 @@ backend/**/obj/
 .idea/
 .DS_Store
 
+# Deploy secrets
+.env
+
 # Local NLP model weights (multi-GB, downloaded by backend/models/download.sh)
 backend/models/*/
 

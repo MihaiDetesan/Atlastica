@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["--prefix", "app", "run", "dev"],
       "port": 5173
+    },
+    {
+      "name": "api",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "backend/Atlastica.Api", "--launch-profile", "http"],
+      "port": 5124
     }
   ]
 }

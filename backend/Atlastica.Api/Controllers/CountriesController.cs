@@ -2,7 +2,6 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Atlastica.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace Atlastica.Api.Controllers;
@@ -44,7 +43,6 @@ public class CountriesController(AtlasticaDbContext db, CountryFactsService fact
     }
 
     [HttpGet("{isoCode}/facts")]
-    [EnableRateLimiting("facts")]
     public async Task<ActionResult<CountryFactsDto>> GetFacts(string isoCode, CancellationToken ct)
     {
         isoCode = isoCode.ToUpperInvariant();

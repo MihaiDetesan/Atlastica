@@ -1,0 +1,50 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: atlastica
+      POSTGRES_USER: ${POSTGRES_USER:-atlastica}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - internal
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Atlastica.Api/Dockerfile
+    environment:
+      ConnectionStrings__Postgres: Host=postgres;Port=5432;Database=atlastica;Username=${POSTGRES_USER:-atlastica};Password=${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      Cors__AllowedOrigins__0: ${PUBLIC_ORIGIN:?set PUBLIC_ORIGIN in .env, e.g. https://atlastica.example.com}
+    depends_on:
+      - postgres
+    networks:
+      - internal
+    restart: unless-stopped
+    # Deliberately no "ports:" mapping. The API is unreachable from the host
+    # or the public internet - the only route in is through the "web" nginx
+    # container on this same internal network (see deploy/nginx.conf), so
+    # every request must go through the reverse proxy that fronts the site.
+
+  web:
+    build:
+      context: .
+      dockerfile: deploy/web.Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    networks:
+      - internal
+    restart: unless-stopped
+
+networks:
+  internal:
+    driver: bridge
+
+volumes:
+  postgres-data:

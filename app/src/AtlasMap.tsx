@@ -139,7 +139,14 @@ export function AtlasMap({ onSelectCountry }: AtlasMapProps) {
         new Popup().setLngLat(e.lngLat).setDOMContent(nameEl).addTo(map);
         onSelectCountry?.(props.isoCode, props.name);
         const source = map.getSource("selected-country") as GeoJSONSource | undefined;
-        source?.setData({ type: "FeatureCollection", features: [feature] });
+        // e.features[0] is a MapGeoJSONFeature, not a plain GeoJSON Feature - it
+        // carries internal non-serializable fields that make setData's worker
+        // postMessage silently fail ("can't serialize object of unregistered
+        // class"), so re-wrap it as a plain Feature first.
+        source?.setData({
+          type: "FeatureCollection",
+          features: [{ type: "Feature", geometry: feature.geometry, properties: feature.properties }],
+        });
       });
       map.on("mouseenter", "atlas-countries-fill", () => (map.getCanvas().style.cursor = "pointer"));
       map.on("mouseleave", "atlas-countries-fill", () => (map.getCanvas().style.cursor = ""));

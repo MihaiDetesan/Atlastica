@@ -3,11 +3,13 @@ using Atlastica.Domain;
 using Atlastica.Infrastructure;
 using Atlastica.Infrastructure.ExternalFacts;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 var builder = Host.CreateApplicationBuilder(args);
+builder.Configuration.AddUserSecrets<Program>(optional: true);
 builder.Services.AddAtlasticaInfrastructure(builder.Configuration);
 builder.Services.AddAtlasticaFactsExtraction(builder.Configuration);
 using var host = builder.Build();
