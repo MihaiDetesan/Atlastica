@@ -48,7 +48,17 @@ export function CountryPanel({ isoCode, name, onClose }: CountryPanelProps) {
       >
         ×
       </button>
-      <h2 style={{ margin: "0 0 4px", fontSize: 18 }}>{name}</h2>
+      <h2 style={{ margin: "0 0 4px", fontSize: 18, display: "flex", alignItems: "center", gap: 8 }}>
+        <img
+          src={`https://flagcdn.com/24x18/${isoCode.toLowerCase()}.png`}
+          srcSet={`https://flagcdn.com/48x36/${isoCode.toLowerCase()}.png 2x`}
+          alt=""
+          width={24}
+          height={18}
+          style={{ borderRadius: 2, flexShrink: 0 }}
+        />
+        {name}
+      </h2>
       <p style={{ margin: "0 0 12px", opacity: 0.7, fontSize: 13 }}>{isoCode}</p>
 
       {error && <p style={{ color: "#e34948" }}>Failed to load facts: {error}</p>}

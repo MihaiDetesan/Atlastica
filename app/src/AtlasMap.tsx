@@ -9,7 +9,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useRef, useState } from "react";
 import { colorCountries } from "./adjacency";
 import { BOUNDARY_PALETTE } from "./colors";
-import { countriesToFeatureCollection, fetchCountries } from "./data";
+import { countriesToFeatureCollection, countriesToLabelFeatureCollection, fetchCountries } from "./data";
 import type { CountryFeature } from "./types";
 
 const BASE_STYLE = "https://demotiles.maplibre.org/style.json";
@@ -31,6 +31,26 @@ function withColoring(fc: GeoJSON.FeatureCollection): GeoJSON.FeatureCollection 
       properties: {
         ...f.properties,
         colorIndex: colorOf.get(String(f.properties?.isoCode ?? "")) ?? 0,
+      },
+    })),
+  };
+}
+
+/** Scales each country's name/flag by its real area (sqrt'd, so it tracks linear size rather
+ * than raw area) so Russia's label reads bigger than Luxembourg's rather than all being
+ * identical regardless of how much territory they actually fit into. */
+function withLabelSizing(fc: GeoJSON.FeatureCollection): GeoJSON.FeatureCollection {
+  const sqrtAreas = fc.features.map((f) => Math.sqrt(Number(f.properties?.areaKm2 ?? 0)));
+  const min = Math.min(...sqrtAreas);
+  const max = Math.max(...sqrtAreas);
+  const range = max - min || 1;
+  return {
+    ...fc,
+    features: fc.features.map((f, i) => ({
+      ...f,
+      properties: {
+        ...f.properties,
+        labelScale: (sqrtAreas[i] - min) / range,
       },
     })),
   };
@@ -96,18 +116,54 @@ export function AtlasMap({ onSelectCountry }: AtlasMapProps) {
         source: "countries",
         paint: { "line-color": "#2b2b2b", "line-width": 1 },
       });
+      // A separate point-ish source (one Polygon per country, its largest part
+      // only - see countriesToLabelFeatureCollection) feeds the label layer below.
+      // Symbol-on-polygon placement in MapLibre places one symbol per polygon
+      // *part*, so sourcing straight from "countries" would repeat an
+      // archipelago-shaped country's name/flag once per island; this source
+      // guarantees exactly one placement per country instead.
+      map.addSource("country-labels", {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [] },
+      });
+
       // Symbol layers on polygon sources auto-place the label at a sensible
       // interior point (MapLibre computes this per feature) and hide it if
       // it doesn't fit at the current zoom - small countries' names appear
       // once zoomed in enough rather than floating outside their territory.
+      // Flag images are loaded lazily per ISO code via "styleimagemissing"
+      // below, rather than pre-fetched for every country up front.
+      map.on("styleimagemissing", (e) => {
+        const id = e.id;
+        if (!id.startsWith("flag-")) return;
+        const isoCode = id.slice("flag-".length);
+        map
+          .loadImage(`https://flagcdn.com/24x18/${isoCode.toLowerCase()}.png`)
+          .then(({ data }) => {
+            if (!map.hasImage(id)) map.addImage(id, data);
+          })
+          .catch(() => {
+            // No flag available for this code - register a transparent 1x1
+            // placeholder so MapLibre stops re-requesting it every frame.
+            if (!map.hasImage(id)) map.addImage(id, { width: 1, height: 1, data: new Uint8Array(4) });
+          });
+      });
+
       map.addLayer({
         id: "atlas-countries-label",
         type: "symbol",
-        source: "countries",
+        source: "country-labels",
         layout: {
+          "icon-image": ["concat", "flag-", ["get", "isoCode"]],
+          "icon-size": ["interpolate", ["linear"], ["get", "labelScale"], 0, 0.35, 1, 1.1],
+          "icon-anchor": "right",
+          "icon-offset": [-4, 0],
+          "icon-allow-overlap": false,
           "text-field": ["get", "name"],
           "text-font": ["Noto Sans Regular"],
-          "text-size": 11,
+          "text-size": ["interpolate", ["linear"], ["get", "labelScale"], 0, 8, 1, 20],
+          "text-anchor": "left",
+          "text-offset": [0.3, 0],
         },
         paint: {
           "text-color": "#ffffff",
@@ -134,9 +190,21 @@ export function AtlasMap({ onSelectCountry }: AtlasMapProps) {
         const feature = e.features?.[0];
         const props = feature?.properties;
         if (!feature || !props) return;
+        const contentEl = document.createElement("div");
+        contentEl.style.display = "flex";
+        contentEl.style.alignItems = "center";
+        contentEl.style.gap = "6px";
+        const flagEl = document.createElement("img");
+        flagEl.src = `https://flagcdn.com/24x18/${String(props.isoCode).toLowerCase()}.png`;
+        flagEl.width = 24;
+        flagEl.height = 18;
+        flagEl.alt = "";
+        flagEl.style.borderRadius = "2px";
+        flagEl.style.flexShrink = "0";
         const nameEl = document.createElement("strong");
         nameEl.textContent = props.name;
-        new Popup().setLngLat(e.lngLat).setDOMContent(nameEl).addTo(map);
+        contentEl.append(flagEl, nameEl);
+        new Popup().setLngLat(e.lngLat).setDOMContent(contentEl).addTo(map);
         onSelectCountry?.(props.isoCode, props.name);
         const source = map.getSource("selected-country") as GeoJSONSource | undefined;
         // e.features[0] is a MapGeoJSONFeature, not a plain GeoJSON Feature - it
@@ -156,6 +224,8 @@ export function AtlasMap({ onSelectCountry }: AtlasMapProps) {
           if (mapRef.current !== map) return;
           const source = map.getSource("countries") as GeoJSONSource | undefined;
           source?.setData(withColoring(countriesToFeatureCollection(countries)));
+          const labelSource = map.getSource("country-labels") as GeoJSONSource | undefined;
+          labelSource?.setData(withLabelSizing(countriesToLabelFeatureCollection(countries)));
         })
         .catch((err: unknown) => setError(err instanceof Error ? err.message : String(err)));
     });
